@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { Upload, Download, Share2, RotateCcw, Sparkles } from "lucide-react";
 
 const TryOn = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const modelInputRef = useRef<HTMLInputElement>(null);
   const garmentInputRef = useRef<HTMLInputElement>(null);
   
@@ -20,11 +22,20 @@ const TryOn = () => {
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [analysisData, setAnalysisData] = useState<any>(null);
   
   // AI Settings
   const [samples, setSamples] = useState([20]);
   const [steps, setSteps] = useState([20]);
   const [guidanceScale, setGuidanceScale] = useState([7.5]);
+
+  // Load analysis data on component mount
+  useEffect(() => {
+    const storedAnalysis = localStorage.getItem('bodyAnalysis');
+    if (storedAnalysis) {
+      setAnalysisData(JSON.parse(storedAnalysis));
+    }
+  }, []);
 
   const handleImageUpload = (
     file: File, 
@@ -103,6 +114,14 @@ const TryOn = () => {
       // For demo purposes, we'll show the model image as result
       // In real implementation, this would be the AI-generated try-on result
       setResultImage(modelImage);
+      
+      // Store the result for the results page
+      localStorage.setItem('tryOnResult', modelImage);
+      localStorage.setItem('modelImage', modelImage);
+      if (garmentImage) {
+        localStorage.setItem('garmentImage', garmentImage);
+      }
+      
       setProgress(100);
       
       toast({
@@ -295,6 +314,21 @@ const TryOn = () => {
                 <CardTitle>AI Settings & Result</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Body Analysis Summary */}
+                {analysisData && (
+                  <div className="space-y-3 p-4 bg-card/30 rounded-lg border border-border/50">
+                    <h4 className="font-medium text-sm">Your Body Profile:</h4>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {analysisData.bodyType?.charAt(0).toUpperCase() + analysisData.bodyType?.slice(1)} Shape
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        Size: {analysisData.idealSizes?.tops}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* AI Settings */}
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -338,19 +372,19 @@ const TryOn = () => {
                   variant="ai"
                   className="w-full"
                 >
-                  {isGenerating ? "Generating..." : "Generate Try-On"}
+                  {isGenerating ? "Generating Unlimited Try-On..." : "Generate Try-On (Unlimited)"}
                 </Button>
 
                 {/* Progress Bar */}
                 {isGenerating && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Processing...</span>
+                      <span>Processing AI Try-On...</span>
                       <span>{Math.round(progress)}%</span>
                     </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
+                    <div className="progress-bar">
                       <div 
-                        className="bg-ai-primary h-2 rounded-full transition-all duration-300"
+                        className="progress-fill"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -363,12 +397,17 @@ const TryOn = () => {
                     <div className="relative">
                       <img
                         src={resultImage}
-                        alt="Try-on result"
+                        alt="Virtual try-on result with AI overlay"
                         className="w-full rounded-lg shadow-lg"
                       />
-                      <Badge className="absolute top-2 left-2 bg-ai-primary text-white">
-                        AI Generated
+                      <Badge className="absolute top-2 left-2 bg-gradient-to-r from-ai-primary to-ai-secondary text-white">
+                        AI Try-On Result
                       </Badge>
+                      {analysisData && (
+                        <Badge className="absolute top-2 right-2 bg-card/80 text-xs">
+                          {analysisData.bodyType} Shape
+                        </Badge>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-3 gap-2">
@@ -376,24 +415,48 @@ const TryOn = () => {
                         variant="outline"
                         size="sm"
                         onClick={handleDownload}
+                        className="flex items-center gap-1"
                       >
                         <Download className="h-4 w-4" />
+                        Save
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={handleShare}
+                        className="flex items-center gap-1"
                       >
                         <Share2 className="h-4 w-4" />
+                        Share
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={handleReset}
+                        className="flex items-center gap-1"
                       >
                         <RotateCcw className="h-4 w-4" />
+                        Reset
                       </Button>
                     </div>
+
+                    {/* Analysis Integration */}
+                    {analysisData && (
+                      <div className="mt-4 p-4 bg-card/30 rounded-lg border border-border/50">
+                        <h4 className="font-medium text-sm mb-2">Fit Analysis:</h4>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Based on your {analysisData.bodyType} body shape, this garment should fit well.
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => navigate("/analysis")}
+                          className="w-full"
+                        >
+                          View Full Analysis
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>

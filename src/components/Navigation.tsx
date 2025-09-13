@@ -8,6 +8,7 @@ const Navigation = () => {
     { path: "/", label: "Home" },
     { path: "/analysis", label: "Analysis" },
     { path: "/try-on", label: "Try-On" },
+    { path: "/results", label: "Results" },
   ];
 
   return (
@@ -15,7 +16,7 @@ const Navigation = () => {
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-white">
-            ClothAI™
+            FitVerse AI™
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">

@@ -34,7 +34,7 @@ const Index = () => {
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-6xl font-bold text-white mb-6 animate-glow">
-              ClothAI™
+              FitVerse AI™
             </h1>
             <p className="text-xl text-white/90 mb-8 leading-relaxed">
               The future of fashion meets AI. Analyze your body type, get personalized recommendations, 
